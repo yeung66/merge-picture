@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>拍立得生成器</title>
+
+        <style>
+            body {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+        </style>
+    </head>
+    <body>
+        <label for="fileUploader">图片上传</label>
+        <input type="file" id="fileUploader" />
+        <label for="text">
+            文字输入（可以为空）
+            <input type="text" id="textInput">
+        </label>
+        <div id="imageBox"></div>
+
+        <script>
+            document
+                .querySelector("#fileUploader")
+                .addEventListener("change", (e) => {
+                    const file = e.target.files[0]
+                    const reader = new FileReader()
+                    reader.readAsDataURL(file)
+                    reader.onload = (e) => {
+                        // document.querySelector('#imageBox').innerHTML = `<img src=${e.target.result} />`
+
+                        const image = new Image()
+                        image.src = e.target.result // 获取图片文件的base64数据
+                        image.onload = () => {
+                            const canvas = document.createElement("canvas")
+                            const ctx = canvas.getContext("2d")
+                            const borderWidth = 60
+                            const footerHeight = 160
+
+                            const picWidth = image.width > 1200 ? 1200 : image.width
+                            const picHeight = image.width > 1200 ? Math.floor(1200 / image.width * image.height) : image.height
+
+                            console.log(Math.floor(1200 / picWidth * image.height))
+
+                            canvas.width = picWidth + borderWidth * 2
+                            canvas.height = picHeight + footerHeight + borderWidth
+
+                            console.log(`${image.width} x ${image.height} ${picWidth} ${picHeight}`)
+
+                            ctx.fillStyle = "#FFFAFA"
+                            ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+                            ctx.drawImage(image, borderWidth, borderWidth, picWidth, picHeight)
+
+                            ctx.fillStyle = "#000"
+                            ctx.font = "24px serif";
+                            ctx.fillText(document.querySelector('#textInput').value, borderWidth, canvas.height - 50, canvas.width - 40)
+
+                            const finalImageUrl = canvas.toDataURL("image/png", 1)
+
+                            
+                            document.querySelector(
+                                "#imageBox"
+                            ).innerHTML = `<img src=${finalImageUrl}>`
+                        }
+                    }
+                })
+        </script>
+    </body>
+</html>
