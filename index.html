@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>拼长图</title>
+
+        <style>
+            .display {
+                margin-top: 20px;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .row {
+                display: flex;
+                flex-direction: row;
+                width: fit-content;
+            }
+            .col {
+                flex: 1;
+                border: 1px solid #333;
+                width: 300px;
+                height: 200px;
+                overflow: hidden;
+            }
+
+            .col img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+            }
+
+            #imageBox {
+                margin-top: 20px;
+            }
+        </style>
+    </head>
+
+    <body>
+        <label for="row-no"> 行数量：</label
+        ><input type="number" id="row-no" value="2" />
+        <label for="col-no"> 列数量：</label
+        ><input type="number" id="col-no" value="2" />
+
+        <button id="genDisplay">生成布局</button>
+        <button id="merge">生成图片</button>
+        <div class="display"></div>
+
+        <div id="imageBox"></div>
+
+        <!-- <script src="https://cdn.bootcss.com/jquery/1.11.3/jquery.min.js"></script> -->
+        <script>
+            document
+                .querySelector("#genDisplay")
+                .addEventListener("click", () => {
+                    let rowNo = document.querySelector("#row-no").value
+                    let colNo = document.querySelector("#col-no").value
+                    let display = document.querySelector(".display")
+                    display.innerHTML = ""
+                    for (let i = 0; i < rowNo; i++) {
+                        let row = document.createElement("div")
+                        row.className = "row"
+                        for (let j = 0; j < colNo; j++) {
+                            let col = document.createElement("div")
+                            col.className = "col"
+                            col.id = `cell${i * colNo + j}`
+                            row.appendChild(col)
+                        }
+                        display.appendChild(row)
+                    }
+
+                    let cells = document.querySelectorAll(".col")
+                    const total = rowNo * colNo
+                    const imgInstances = [...Array(total)].fill(null)
+
+                    cells.forEach((cell) => {
+                        let cellId = cell.id
+                        let cellIndex = parseInt(cellId.split("cell")[1])
+                        cell.addEventListener("click", async (e) => {
+                            const fileUpload = document.createElement("input")
+                            fileUpload.type = "file"
+                            fileUpload.accept = "image/*"
+                            fileUpload.addEventListener("change", async (e) => {
+                                const file = e.target.files[0]
+                                const reader = new FileReader()
+                                reader.readAsDataURL(file)
+                                reader.onload = (e) => {
+                                    cell.innerHTML = `<img src=${e.target.result} />`
+
+                                    const image = new Image()
+                                    image.src = e.target.result // 获取图片文件的base64数据
+                                    image.onload = () => {
+                                        // 图片实例化成功后存起来
+                                        imgInstances[cellIndex] = image
+                                    }
+                                }
+                            })
+
+                            fileUpload.click()
+                        })
+                    })
+
+                    const drawMergeImage = () => {
+                        console.log(imgInstances)
+                        // check if all elements in imgInstances are not null
+                        if (imgInstances.some((img) => !img)) {
+                            alert("请先填满图片")
+                            return
+                        }
+
+                        const canvas = document.createElement("canvas")
+                        const ctx = canvas.getContext("2d")
+
+                        canvas.width = colNo * picWidth + (colNo - 1) * gapWidth
+                        canvas.height =
+                            rowNo * picHeight + (rowNo - 1) * gapWidth
+
+                        ctx.fillStyle = "#fff"
+                        ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+                        imgInstances.forEach((img, index) => {
+                            if (img) {
+                                const x =
+                                    (index % colNo) * (picWidth + gapWidth)
+                                const y =
+                                    Math.floor(index / colNo) *
+                                    (picHeight + gapWidth)
+                                ctx.drawImage(img, x, y, picWidth, picHeight)
+                            }
+                        })
+
+                        const finalImageUrl = canvas.toDataURL("image/png", 1)
+                        document.querySelector(
+                            "#imageBox"
+                        ).innerHTML = `<img src=${finalImageUrl}><a download href=${finalImageUrl}>点击下载</a>`
+                    }
+
+                    document
+                        .querySelector("#merge")
+                        .addEventListener("click", drawMergeImage)
+                })
+        </script>
+        <script>
+            const gapWidth = 10
+            const picWidth = 480
+            const picHeight = 320
+
+            document.querySelector("#genDisplay").click()
+        </script>
+    </body>
+</html>
